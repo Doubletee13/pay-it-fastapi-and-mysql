@@ -105,17 +105,7 @@ def create(user: UserCreate, db: db_dependency):
     user.password = hashed_password
     new_user = create_user(db, user)
 
-    # new_user = UserResponse(
-    #         id = user.id, 
-    #         name = user.name,
-    #         phone = user.phone,
-    #         email = user.email,
-    #         gender = user.gender,
-    #         category = user.category,
-    #         location = user.location,
-    #         created_at = datetime.utcnow(),
-    #         updated_at = datetime.utcnow()
-    # )
+    
 
     return {
         "success": True,
@@ -134,25 +124,6 @@ def get_a_user(db: db_dependency, user_id:int):
         "message": "User retrieved successfully"
     }
 
-    user = create_user(db, user)
-
-    new_user = UserResponse(
-            id = user.id, 
-            name = user.name,
-            phone = user.phone,
-            email = user.email,
-            gender = user.gender,
-            category = user.category,
-            location = user.location,
-            created_at = datetime.utcnow(),
-            updated_at = datetime.utcnow()
-    )
-
-    return {
-        "success": True,
-        "data": new_user, 
-        "message": "User Retrieved successfully"
-    }
 
 @router.patch("/{user_id}")
 def update(user_id: int, data: UserUpdate, db: db_dependency):
