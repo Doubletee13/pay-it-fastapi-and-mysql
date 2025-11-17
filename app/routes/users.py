@@ -77,15 +77,7 @@ def update_user(db: db_dependency, user_id: int, data: UserUpdate):
 
 
 
-@router.get("/")
-def get_users(db: db_dependency):
-    users = get_all_users(db)
 
-    return {
-        "success": True,
-        "data": users, 
-        "message": "User retrieved successfully"
-    }
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create(user: UserCreate, db: db_dependency):
@@ -114,10 +106,25 @@ def create(user: UserCreate, db: db_dependency):
     }
 
 
+
+
+@router.get("/")
+def get_users(db: db_dependency):
+    users = get_all_users(db)
+
+    return {
+        "success": True,
+        "data": users, 
+        "message": "User retrieved successfully"
+    }
+
+
 @router.get("/{user_id}")
 def get_a_user(db: db_dependency, user_id:int):
     user = get_user(db,user_id)
 
+    if not user:
+        raise HTTPException(404, "User not found")
     return {
         "success": True,
         "data": user, 
