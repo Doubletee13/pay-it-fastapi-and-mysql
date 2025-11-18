@@ -1,26 +1,56 @@
-from pydantic import BaseModel,constr,EmailStr,validator,constr
+from pydantic import BaseModel,constr,EmailStr,validator, Field, model_validator
 from typing import Optional
 from datetime import datetime
 from app.routes.enums import Category, Gender
+import re
+
+
+
 
 class UserCreate(BaseModel):
-    name: constr(min_length=4, max_length=20)
-    phone: constr(min_length=11)
+    name: str = Field(min_length=4, max_length=20)
+    phone: str = Field(min_length=11) 
     email: EmailStr
-    password: str
+    password: str = Field(min_length=6, pattern=r'')  
+    confirm_password: str  
     gender: Gender
     category: Category
-    location: str
+    location:str = Field(min_length=3)
+
+    @validator('phone')
+    def validate_number(cls, value):
+        if len(value) != 11:
+            raise ValueError('Phone number must be 11 long')
+        if not any(number.isdigit() for number in value) :
+            raise ValueError('Phone number must be digits')
+        return value
 
     @validator('password')
-    def validate_password(cls, v):
-        if not (8 <= len(v) <= 15):
-            raise ValueError('Password must be between 8 and 15 characters long')
-        if not any(c.isalpha() for c in v):
-            raise ValueError('Password must contain at least one letter')
-        if not any(c.isdigit() for c in v):
-            raise ValueError('Password must contain at least one digit')
-        return v
+    def validate_password(cls, value):
+        if not re.search(r"[A-Z]", value):
+            raise ValueError('password must contain alteast one uppercase letter')
+        if not re.search(r"[a-z]", value):
+            raise ValueError('password must contain alteast one lowercase letter')
+
+        if not re.search(r"\d",value):
+            raise ValueError('password must contain alteast one numeric value')
+        if not re.search(r"[^A-Za-z0-9]", value):
+            raise ValueError('password must contain alteast one special character')
+
+        return value
+
+    @model_validator(mode = "after")
+    def validate_confirm_password(self):
+        if self.password != self.confirm_password:
+            raise ValueError('password must match')
+
+        return self
+
+    
+
+
+    
+
 
   
 
@@ -40,23 +70,36 @@ class UserResponse(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    name: Optional[constr(min_length=4, max_length=20)] = None
-    phone: Optional[constr(min_length=11)] = None
-    email: Optional[str] = None
-    password: Optional[str] = None
+    name: Optional[str] = Field(None,min_length=4, max_length=20)
+    phone: Optional[str] = Field(None,min_length=11)
+    email: Optional[EmailStr] = None
+    password: Optional[str] = Field(None,min_length=6)
     gender: Optional[Gender] = None
     category: Optional[Category] = None
-    location: Optional[str] = None
+    location: Optional[str] = Field(None,min_length=11)
+
+
+    @validator('phone')
+    def validate_password(cls, value):
+        if len(value)!= 11:
+            raise ValueError('Phone number must be 11 long')
+        if not value.isdigit():
+            raise ValueError('Phone number must be digits')
+        return value
 
     @validator('password')
-    def validate_password(cls, v):
-        if not (8 <= len(v) <= 15):
-            raise ValueError('Password must be between 8 and 15 characters long')
-        if not any(c.isalpha() for c in v):
-            raise ValueError('Password must contain at least one letter')
-        if not any(c.isdigit() for c in v):
-            raise ValueError('Password must contain at least one digit')
-        return v
+    def validate_password(cls, value):
+        if not re.search(r"[A-Z]", value):
+            raise ValueError('password must contain alteast one uppercase letter')
+        if not re.search(r"[a-z]", value):
+            raise ValueError('password must contain alteast one lowercase letter')
+
+        if not re.search(r"\d",value):
+            raise ValueError('password must contain alteast one numeric value')
+        if not re.search(r"[^A-Za-z0-9]", value):
+            raise ValueError('password must contain alteast one special character')
+
+        return value
   
 
 

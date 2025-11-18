@@ -2,8 +2,10 @@ import logging
 from fastapi import FastAPI, HTTPException, status
 from .models.base import Base
 from .models.user import User
+from .models.product import Product
 from .routes.database import engine
 from .routes import users
+from .routes import products
 
 
 
@@ -25,3 +27,4 @@ def index():
     }
 
 app.include_router(users.router)
+app.include_router(products.router)

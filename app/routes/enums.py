@@ -9,5 +9,5 @@ class Category(str, Enum):
 
 class Gender(str, Enum):
     MALE = "M"
-    FEMALER = "F"
+    FEMALE = "F"
     

@@ -18,7 +18,7 @@ db_dependency = Annotated[Session, Depends(get_db)]
 
 
 def create_user(db: db_dependency, user: UserCreate):
-    db_user = User(**user.dict())
+    db_user = User(**user.dict(exclude=({"confirm_password"})))
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
