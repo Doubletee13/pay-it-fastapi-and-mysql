@@ -58,15 +58,17 @@ def update_user(db: db_dependency, user_id: int, data: UserUpdate):
         elif key == "email":
             db_user.email = value
         elif key == "phone":
-            db_user.password = value
+            db_user.phone = value
         elif key == "password":
-            db_user.password = value
+                 salt = bcrypt.gensalt(rounds=12)
+                 hashed_password = bcrypt.hashpw(value.encode('utf-8'), salt)
+                 db_user.password = hashed_password
         elif key == "location":
-            db_user.password = value
+            db_user.location = value
         elif key == "gender":
-            db_user.password = value
+            db_user.gender = value
         elif key == "category":
-            db_user.password = value
+            db_user.category = value
         
 
     db.commit()
