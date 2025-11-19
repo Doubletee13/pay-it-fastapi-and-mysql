@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session, defer
 from app.models.user import User
+from app.middlewares.auth import AuthMiddleware
 import logging
 import bcrypt
 import pymysql
@@ -107,6 +108,17 @@ def update_user(db: db_dependency, user_id: int, data: UserUpdate):
 
 
 # ROUTES
+
+@router.get("/me", status_code=status.HTTP_200_OK)
+def get_current_user(current_user = Depends(AuthMiddleware)):
+    return {
+        "success": True,
+        "data": current_user, 
+        "message": "User Logged in successfully"
+    }
+
+
+
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model = UserResponse)

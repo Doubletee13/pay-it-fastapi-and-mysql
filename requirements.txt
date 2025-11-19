@@ -6,3 +6,7 @@ python-dotenv == 1.0.0
 pydantic[email]
 sqlalchemy 
 bcrypt
+python-jose
+
+
+

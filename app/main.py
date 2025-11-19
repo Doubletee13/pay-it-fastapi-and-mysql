@@ -6,6 +6,8 @@ from .models.product import Product
 from .routes.database import engine
 from .routes import users
 from .routes import products
+from .routes import auths
+
 
 
 
@@ -28,3 +30,4 @@ def index():
 
 app.include_router(users.router)
 app.include_router(products.router)
+app.include_router(auths.router)
