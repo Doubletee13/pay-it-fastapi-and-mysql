@@ -1,5 +1,5 @@
 from app.routes.database import get_db
-from app.schema.users_schema import UserCreate, UserResponse, UserUpdate
+from app.schema.users_schema import UserCreate, UserData, UserResponse, UserUpdate
 from datetime import datetime
 from typing import Annotated
 from fastapi import APIRouter, Depends, status, HTTPException
@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, defer
 from app.models.user import User
 import logging
 import bcrypt
+import pymysql
 
 
 logger = logging.getLogger(__name__)
@@ -17,12 +18,39 @@ router = APIRouter(prefix="/users", tags=["Users"])
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
+
+
+
+# EXCEPTION ERROR FUNCTION
+def raiseError(e):
+    logger.error(f"failed to create record error: {e}")
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail = {
+            "status": "error",
+            "message": f"failed to create user: {e}",
+            "timestamp": f"{datetime.utcnow()}"
+        }
+    )
+
+# CRUD OPERATIONS
+
+
 def create_user(db: db_dependency, user: UserCreate):
     db_user = User(**user.dict(exclude=({"confirm_password"})))
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+
+    try:
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    except pymysql.DataError as e:
+        raiseError(e)
+    except Exception as e:
+        raiseError(e)
+
+
+
 
 def get_user(db: db_dependency, user_id: int):
     return db.query(User).filter(User.id == user_id).options(defer(User.password)).first()
@@ -78,10 +106,10 @@ def update_user(db: db_dependency, user_id: int, data: UserUpdate):
 
 
 
+# ROUTES
 
 
-
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model = UserResponse)
 def create(user: UserCreate, db: db_dependency):
     
     if not user.name or not user.email or not user.phone or not user.location or not user.gender or not user.category or not user.password:
@@ -117,7 +145,7 @@ def get_users(db: db_dependency):
     return {
         "success": True,
         "data": users, 
-        "message": "User retrieved successfully"
+        "message": "Users retrieved successfully"
     }
 
 

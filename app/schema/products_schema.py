@@ -1,11 +1,11 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
-from app.routes.enums import Category, Gender
+from app.routes.enums import ProductType
 
 class ProductCreate(BaseModel):
     price: float
-    category: str
+    category: ProductType
     quantity: int
     user_id: int
     
@@ -20,7 +20,7 @@ class ProductCreate(BaseModel):
 class ProductResponse(BaseModel):
     id: int 
     price: float
-    category: str
+    category: ProductType
     quantity: int
     user_id: int
     created_at: datetime
@@ -29,10 +29,10 @@ class ProductResponse(BaseModel):
 
 
 class ProductUpdate(BaseModel):
-    price: Optional[str] = None
-    category: Optional[str] = None
+    price: Optional[float] = None
+    category: Optional[ProductType] = None
     quantity: Optional[int] = None
-    password: Optional[str] = None
+    
     
     
 

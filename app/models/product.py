@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Enum, func, Numeric, F
 from app.models.base import Base
 from datetime import datetime
 from sqlalchemy.orm import relationship
+from app.routes.enums import ProductType
 
 
 
@@ -12,7 +13,7 @@ class Product(Base):
 
     id = Column(Integer, primary_key=True, nullable=False, index=True)
     price = Column(Numeric(10,2), nullable=False)
-    category = Column(Enum('grains','tubers','vegetables','fruits','livestock','cereals','latex','oils'), nullable=False)
+    category = Column(Enum(ProductType.GRAINS.value,ProductType.TUBERS.value,ProductType.VEGETABLES.value,ProductType.FRUITS.value,ProductType.LIVESTOCK.value,ProductType.CEREALS.value,ProductType.LATEX.value,ProductType.OILS.value), nullable=False)
     quantity = Column(Integer, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", on_delete="CASCADE"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

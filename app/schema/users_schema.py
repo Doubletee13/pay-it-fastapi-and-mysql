@@ -56,7 +56,7 @@ class UserCreate(BaseModel):
 
 
 
-class UserResponse(BaseModel):
+class UserData(BaseModel):
     id: int 
     name: str
     phone: str
@@ -66,6 +66,12 @@ class UserResponse(BaseModel):
     location: str
     created_at: datetime
     updated_at: datetime
+
+class UserResponse(BaseModel):
+    success: bool
+    data: UserData
+    message: str
+
 
 
 
