@@ -14,8 +14,19 @@ class UserCreate(BaseModel):
     password: str = Field(min_length=6, pattern=r'')  
     confirm_password: str  
     gender: Gender
-    category: Category
     location:str = Field(min_length=3)
+
+    @validator('name')
+    def validate_name(cls, value):
+        if not value.split():
+            raise ValueError('Name cannot be empty')
+        return value
+
+    @validator('location')
+    def validate_location(cls, value):
+        if not value.split():
+            raise ValueError('Location cannot be empty')
+        return value
 
     @validator('phone')
     def validate_number(cls, value):
@@ -62,7 +73,17 @@ class UserData(BaseModel):
     phone: str
     email: str
     gender: Gender
-    category: Category
+   
+    location: str
+    created_at: datetime
+    updated_at: datetime
+
+class UserResponseBack(BaseModel):
+    id: int 
+    name: str
+    phone: str
+    email: str
+    gender: Gender
     location: str
     created_at: datetime
     updated_at: datetime
@@ -81,7 +102,6 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     password: Optional[str] = Field(None,min_length=6)
     gender: Optional[Gender] = None
-    category: Optional[Category] = None
     location: Optional[str] = Field(None,min_length=11)
 
 

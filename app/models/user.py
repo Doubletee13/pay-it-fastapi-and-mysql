@@ -17,11 +17,13 @@ class User(Base):
     email = Column(String(100), unique=True, nullable=False, index=True)
     password = Column(String(100),nullable=True)
     gender = Column(Enum(Gender.MALE.value,Gender.FEMALE.value), nullable=False) 
-    category = Column(Enum('buyer', 'farmer'), nullable=False) 
+    # category = Column(Enum('buyer', 'farmer'), nullable=False) 
     location = Column(String(255),min_length=3, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(),nullable=False)
 
-    products = relationship("Product", back_populates="owner", cascade="all, delete")
+    farmer = relationship("Farmer", back_populates="user", uselist=False)
+    buyer = relationship("Buyer", back_populates="user", uselist=False)
+    
 
     

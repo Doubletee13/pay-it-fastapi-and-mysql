@@ -1,9 +1,10 @@
 from app.routes.database import get_db
-from app.schema.users_schema import UserCreate, UserData, UserResponse, UserUpdate
+from app.schema.users_schema import UserCreate, UserData, UserResponse, UserUpdate, UserResponseBack
 from datetime import datetime
 from typing import Annotated
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, Request
 from sqlalchemy.orm import Session, defer
+from sqlalchemy.exc import IntegrityError
 from app.models.user import User
 from app.middlewares.auth import AuthMiddleware
 import logging
@@ -23,21 +24,36 @@ db_dependency = Annotated[Session, Depends(get_db)]
 
 
 # EXCEPTION ERROR FUNCTION
-def raiseError(e):
-    logger.error(f"failed to create record error: {e}")
+
+def raiseError(e: str, request: Request):
+ 
+    method = request.method.upper()
+
+    if method == "POST":
+        message = f"Failed to create record: {e}"
+    elif method == "GET":
+        message = f"Failed to fetch record: {e}"
+    elif method in ("PUT", "PATCH"):
+        message = f"Failed to update record: {e}"
+    elif method == "DELETE":
+        message = f"Failed to delete record: {e}"
+    else:
+        message = f"Error: {e}"
+
+    logger.error(message)
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
-        detail = {
+        detail={
             "status": "error",
-            "message": f"failed to create user: {e}",
-            "timestamp": f"{datetime.utcnow()}"
+            "message": message,
+            "timestamp": datetime.utcnow().isoformat()
         }
     )
 
 # CRUD OPERATIONS
 
 
-def create_user(db: db_dependency, user: UserCreate):
+def create_user(db: db_dependency, user: UserCreate, request: Request):
     db_user = User(**user.dict(exclude=({"confirm_password"})))
 
     try:
@@ -46,9 +62,9 @@ def create_user(db: db_dependency, user: UserCreate):
         db.refresh(db_user)
         return db_user
     except pymysql.DataError as e:
-        raiseError(e)
+        raiseError(e, request)
     except Exception as e:
-        raiseError(e)
+        raiseError(e, request)
 
 
 
@@ -61,6 +77,8 @@ def get_all_users(db: db_dependency):
     return db.query(User).options(defer(User.password)).all()
 
 
+
+
 def delete_user(db: db_dependency, user_id: int):
     db_user = get_user(db, user_id)
     if not db_user:
@@ -69,6 +87,7 @@ def delete_user(db: db_dependency, user_id: int):
     db.delete(db_user)
     db.commit()
     return True
+
 
 
 
@@ -109,22 +128,15 @@ def update_user(db: db_dependency, user_id: int, data: UserUpdate):
 
 # ROUTES
 
-@router.get("/me", status_code=status.HTTP_200_OK)
-def get_current_user(current_user = Depends(AuthMiddleware)):
-    return {
-        "success": True,
-        "data": current_user, 
-        "message": "User Logged in successfully"
-    }
 
 
 
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model = UserResponse)
-def create(user: UserCreate, db: db_dependency):
+def create(user: UserCreate, db: db_dependency, request: Request):
     
-    if not user.name or not user.email or not user.phone or not user.location or not user.gender or not user.category or not user.password:
+    if not user.name and not user.email and not user.phone and not user.location and not user.gender and not user.password:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="All fields required")
 
     if db.query(User).filter(User.email == user.email).first():
@@ -137,7 +149,7 @@ def create(user: UserCreate, db: db_dependency):
 
     hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), salt)
     user.password = hashed_password
-    new_user = create_user(db, user)
+    new_user = create_user(db, user, request)
 
     
 
@@ -161,49 +173,70 @@ def get_users(db: db_dependency):
     }
 
 
-@router.get("/{user_id}")
-def get_a_user(db: db_dependency, user_id:int):
-    user = get_user(db,user_id)
+@router.get("/me")
+def get_current_user(db: db_dependency, request: Request, current_user = Depends(AuthMiddleware), response_model = UserResponseBack):
+    user = get_user(db, current_user.id)
 
+    
     if not user:
-        raise HTTPException(404, "User not found")
+        raiseError("User not found", request)
+
+    delattr(user, 'password')
+
     return {
         "success": True,
-        "data": user, 
+        "data": user,
         "message": "User retrieved successfully"
     }
+    
 
 
-@router.patch("/{user_id}")
-def update(user_id: int, data: UserUpdate, db: db_dependency):
-    user = update_user(db, user_id, data)
+
+
+
+
+@router.put("/me")
+def update_current_user(data: UserUpdate,db: db_dependency, request: Request, current_user = Depends(AuthMiddleware)):
+    
+    user = update_user(db, current_user.id, data)
+
     if not user:
-        raise HTTPException(404, "User not found")
+        raiseError("User not found", request)
 
-    updated_user = UserResponse(
+    updated_user = UserResponseBack(
         id = user.id, 
         name = user.name,
         phone = user.phone,
         email = user.email,
         gender = user.gender,
-        category = user.category,
         location = user.location,
         created_at = user.created_at,
         updated_at = datetime.utcnow()
-    )
+     )
 
-    
     return {
         "success": True,
-        "data":updated_user,
-        "message": "User details updated successfully"
+        "data": updated_user,
+        "message": "Your account details have been updated successfully"
     }
 
 
-@router.delete("/{user_id}")
-def delete(user_id: int, db: db_dependency):
-    if not delete_user(db, user_id):
-        raise HTTPException(404, "User not found")
+
+@router.delete("/me")
+def delete_user_route(user_id: int, db: db_dependency, request: Request, current_user = Depends(AuthMiddleware)):
+
+    
+    if current_user.id != user_id:
+        raiseError("You are not allowed to delete another user",request)
+
+    try:
+        if not delete_user(db, user_id):
+            raiseError("User not found", request)
+
+    except IntegrityError:
+        db.rollback()
+        raiseError("This user cannot be deleted because they are linked to other records (products, orders, etc.)", request)
+
     return {
         "success": True,
         "message": "User deleted successfully"

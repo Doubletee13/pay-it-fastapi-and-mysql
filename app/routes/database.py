@@ -14,14 +14,14 @@ SQLALCHEMY_DB_URL = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT
 
 engine = create_engine(SQLALCHEMY_DB_URL, echo=True)
 
-Session = sessionmaker(
+SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine
 )
 
 def get_db():
-    db = Session()
+    db = SessionLocal()
 
     try:
         yield db

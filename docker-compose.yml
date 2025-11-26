@@ -6,12 +6,9 @@ services:
     container_name: payit.api
     ports:
       - "8000:8000"
-    environment:
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_DATABASE=${DB_DATABASE}
+    env_file:
+      - .env
+
     volumes:
       - ./app:/app/app
     depends_on:
@@ -28,6 +25,8 @@ services:
   payit_app_db:
     image: mysql:8.0
     container_name: payit_db
+    env_file:
+      - .env
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
       - MYSQL_DATABASE=${DB_DATABASE}
@@ -41,10 +40,10 @@ services:
       - --innodb_buffer_pool_size=256M
       - --innodb_log_file_size=128M
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 20
       start_period: 30s
 volumes:
   payit_db_data:

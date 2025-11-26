@@ -10,7 +10,7 @@ import logging
 
 
 
-# HTTPBearer is responsible forextracting Bearer token from authorization headers
+# HTTPBearer is responsible for extracting Bearer token from authorization headers
 
 security = HTTPBearer()
 
@@ -37,12 +37,12 @@ class JWTBearer(HTTPBearer):
 
         if credentials:
             if credentials.scheme != 'Bearer':
-                raiseHttpException("invalid authorization schem. expected \'Bearer\'")
+                raiseHttpException("invalid authorization scheme. expected \'Bearer\'")
 
             # verify token and get payload
             verified_user = self.verify_jwt(credentials.credentials, db)
             if not verified_user:
-                raiseHttpException('usr no found')
+                raiseHttpException('user not found')
             return verified_user
 
         else:

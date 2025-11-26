@@ -11,16 +11,10 @@ class Gender(str, Enum):
     MALE = "M"
     FEMALE = "F"
 
-class ProductType(str, Enum):
-    GRAINS = "grains"
-    TUBERS = "tubers"
-    VEGETABLES = "vegetables"
-    FRUITS = "fruits"
-    LIVESTOCK = "livestock"
-    CEREALS = "cereals"
-    LATEX = "latex"
-    OILS = "oils"
-
+class OrderStatus(str, Enum):
+    PENDING = "pending"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
 
 
